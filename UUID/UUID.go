@@ -36,10 +36,10 @@ func generateUUID(pointer unsafe.Pointer, size int) (bool, string) {
 			UUID := convertToUUID(input[i], input[i+1], input[i+2], input[i+3], input[i+4], input[i+5], input[i+6], input[i+7], input[i+8], input[i+9], input[i+10], input[i+11], input[i+12], input[i+13], input[i+14], input[i+15])
 
 			if i == size-16 {
-				output = output + fmt.Sprintf("\\%s\\", UUID)
+				output = output + fmt.Sprintf("\"%s\"", UUID)
 				break
 			} else {
-				output = output + fmt.Sprintf("\\%s\\, ", UUID)
+				output = output + fmt.Sprintf("\"%s\", ", UUID)
 			}
 			c = 1
 
@@ -56,6 +56,6 @@ func generateUUID(pointer unsafe.Pointer, size int) (bool, string) {
 func main() {
 
 	_, output := generateUUID(unsafe.Pointer(&input[0]), sizeInput)
-	fmt.Printf("%s\n};", output)
+	fmt.Printf("%s};", output)
 
 }

@@ -31,10 +31,10 @@ func generateMAC(pointer unsafe.Pointer, size int) (bool, string) {
 			MAC := convertToMAC(input[i], input[i+1], input[i+2], input[i+3], input[i+4], input[i+5])
 
 			if i == size-4 {
-				output = output + fmt.Sprintf("\\%s\\", MAC)
+				output = output + fmt.Sprintf("\"%s\"", MAC)
 				break
 			} else {
-				output = output + fmt.Sprintf("\\%s\\, ", MAC)
+				output = output + fmt.Sprintf("\"%s\", ", MAC)
 			}
 
 			c = 1

@@ -31,10 +31,10 @@ func generateIPv4(pointer unsafe.Pointer, size int) (bool, string) {
 			IP := convertToIPv4(input[i], input[i+1], input[i+2], input[i+3])
 
 			if i == size-4 {
-				output = output + fmt.Sprintf("\\%s\\", IP)
+				output = output + fmt.Sprintf("\"%s\"", IP)
 				break
 			} else {
-				output = output + fmt.Sprintf("\\%s\\, ", IP)
+				output = output + fmt.Sprintf("\"%s\", ", IP)
 			}
 
 			c = 1
