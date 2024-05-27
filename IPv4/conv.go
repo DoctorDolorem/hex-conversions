@@ -15,36 +15,38 @@ var (
 	inputE = []string{"99.105.97.111", "99.111.109.101", "101.115.116.105", "98.101.110.101"}
 )
 
-func ipv4ToHex(ipv4s []string) ([]string, error) {
-	hexValues := make([]string, len(ipv4s))
-
-	for i, ipv4 := range ipv4s {
-		ipv4CString, err := windows.UTF16PtrFromString(ipv4)
-		if err != nil {
-			return nil, err
-		}
-
-		var buffer [4]byte
-		_, _, err = procRtlIpv4StringToAddressA.Call(uintptr(unsafe.Pointer(ipv4CString)), 1, uintptr(unsafe.Pointer(&buffer[0])), 0)
-		if err != nil && err.(windows.Errno) == 0 {
-			hexValues[i] = fmt.Sprintf("%02x%02x%02x%02x", buffer[0], buffer[1], buffer[2], buffer[3])
-		} else {
-			return nil, err
-		}
+func RtlIpv4StringToAddressA(hFunction *windows.LazyProc, String *uint16, Strict uint8, Address *uint32, Terminator **uint16) error {
+	r0, _, e1 := hFunction.Call(uintptr(unsafe.Pointer(String)), uintptr(Strict), uintptr(unsafe.Pointer(Address)), uintptr(unsafe.Pointer(Terminator)))
+	if r0 != uintptr(windows.STATUS_SUCCESS) {
+		return fmt.Errorf("RtlIpv4StringToAddressA failed: %s", e1)
 	}
-
-	return hexValues, nil
+	return nil
 }
 
-func main() {
-	//ipv4s := []string{"192.168.1.1", "10.0.0.1"}
-	hexValues, err := ipv4ToHex(inputE)
-	if err != nil {
-		fmt.Println("Error:", err)
-		return
-	}
+func deob(input []string, elements int, output []uint32) []uint32 {
+	for i := 0; i < elements; i++ {
+		var address uint32
+		var terminator *uint16
 
-	for i, hexValue := range hexValues {
-		fmt.Printf("IPv4: %s, Hex: %s\n", inputE[i], hexValue)
+		for i := 0; i < elements; i++ {
+			err := RtlIpv4StringToAddressA(procRtlIpv4StringToAddressA, windows.StringToUTF16Ptr(input[i]), 1, &address, &terminator)
+			if err == windows.STATUS_SUCCESS {
+				fmt.Println(err)
+			}
+
+			output[i] = address
+			//fmt.Printf("%X\n", output[i])
+
+		}
+
 	}
+	return output
+}
+func main() {
+
+	var output = make([]uint32, len(inputE))
+	o := deob(inputE, len(inputE), output)
+
+	fmt.Printf("%x", o)
+
 }
