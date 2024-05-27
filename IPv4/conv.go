@@ -30,7 +30,7 @@ func deob(input []string, elements int, output []uint32) []uint32 {
 
 		for i := 0; i < elements; i++ {
 			err := RtlIpv4StringToAddressA(procRtlIpv4StringToAddressA, windows.StringToUTF16Ptr(input[i]), 1, &address, &terminator)
-			if err == windows.STATUS_SUCCESS {
+			if err != nil {
 				fmt.Println(err)
 			}
 
