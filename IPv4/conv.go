@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"syscall"
 	"unsafe"
 
 	"golang.org/x/sys/windows"
@@ -23,30 +24,45 @@ func RtlIpv4StringToAddressA(hFunction *windows.LazyProc, String *uint16, Strict
 	return nil
 }
 
-func deob(input []string, elements int, output []uint32) []uint32 {
-	for i := 0; i < elements; i++ {
-		var address uint32
+func Ipv4Deobfuscation(Ipv4Array []string) ([]int, error) {
+	var deobfuscated []int
+
+	for _, ipv4 := range Ipv4Array {
 		var terminator *uint16
+		var address uint32
 
-		for i := 0; i < elements; i++ {
-			err := RtlIpv4StringToAddressA(procRtlIpv4StringToAddressA, windows.StringToUTF16Ptr(input[i]), 1, &address, &terminator)
-			if err != nil {
-				fmt.Println(err)
-			}
-
-			output[i] = address
-			//fmt.Printf("%X\n", output[i])
-
+		ipv4Ptr, err := syscall.UTF16PtrFromString(ipv4)
+		if err != nil {
+			return nil, err
 		}
 
+		r0, _, e1 := procRtlIpv4StringToAddressA.Call(uintptr(unsafe.Pointer(ipv4Ptr)), 0, uintptr(unsafe.Pointer(&address)), uintptr(unsafe.Pointer(&terminator)))
+		if r0 != 0 {
+			return nil, fmt.Errorf("RtlIpv4StringToAddressA failed: %s", e1)
+		}
+
+		// Reverse the byte order of the address
+		address = (address>>24)&0xff | // move byte 3 to byte 0
+			(address<<8)&0xff0000 | // move byte 1 to byte 2
+			(address>>8)&0xff00 | // move byte 2 to byte 1
+			(address<<24)&0xff000000 // byte 0 to byte 3
+
+		deobfuscated = append(deobfuscated, int(address))
 	}
-	return output
+
+	return deobfuscated, nil
 }
+
 func main() {
 
-	var output = make([]uint32, len(inputE))
-	o := deob(inputE, len(inputE), output)
+	ipv4, err := Ipv4Deobfuscation(inputE)
+	if err != nil {
+		fmt.Println("Error: ", err)
+	}
 
-	fmt.Printf("%x", o)
+	for _, val := range ipv4 {
+		fmt.Printf("0x%X ", val)
+	}
+	fmt.Println()
 
 }
